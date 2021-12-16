@@ -12,12 +12,12 @@ Repo utilizado para elaborar las transparencias del trabajo en equipo para la as
 
 <!-- En la linea de abajo TIENES QUE SUSTITUIR "perezp44" por tu usuario de Github-->
 
-La versión final de estas transparencias puede visualizarse en: <https://joorge0603.github.io/_trabajo_BigData_slides/>.
+La versión final de estas transparencias puede visualizarse en: <https://joorge0603.github.io/trabajo_BigData_slides/>.
 
 
 <!-- En la linea de abajo TIENES QUE SUSTITUIR (otra vez) "perezp44" por tu usuario de Github-->
 
-La versión final del trabajo puede visualizarse en: <https://joorge0603.github.io/_trabajo_BigData_equipo/>.
+La versión final del trabajo puede visualizarse en: <https://joorge0603.github.io/trabajo_BigData_equipo/>.
 
 
 
