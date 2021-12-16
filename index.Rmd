@@ -1,0 +1,1138 @@
+---
+title: "La piratería"
+subtitle: "1993-2020"
+author: "Teodoro D'Agostino, Jorge González y Aurora Lloret. Universitat de València."
+date: "Diciembre de 2021 (actualizado el `r format(Sys.time(), '%d-%m-%Y')`)"
+output:
+  ioslides_presentation: 
+    widescreen: yes
+    bigger: yes
+    background.color: "white"
+    css: my_css_file.css
+bibliography: references.bib
+---
+
+```{css, echo = FALSE}
+body {background-color: grey;}
+```
+
+```{r packages-setup, include = FALSE}
+library(tidyverse)
+library(klippy)  #- remotes::install_github("rlesur/klippy")
+library(knitr)
+```
+
+```{r chunk-setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE, 
+                      #results = "hold",
+                      cache = FALSE, cache.path = "/caches/", comment = "#>",
+                      #fig.width = 7, #fig.height= 7,   
+                      #out.width = 7, out.height = 7,
+                      collapse = TRUE,  fig.show = "hold",
+                      fig.asp = 0.628, out.width = "75%", fig.align = "center")
+knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
+```
+
+```{r options-setup, include = FALSE}
+options(scipen = 999) #- para quitar la notación científica
+options("yaml.eval.expr" = TRUE) 
+```
+
+```{r klippy, echo = FALSE}
+klippy::klippy(position = c("top", "right"))
+```
+
+# Introducción
+
+## Introducción {.flexbox .vcenter}
+> - En este trabajo trataremos de extraer algunas conclusiones y ayudar al lector a comprender algunos datos sobre la piratería marítima en el mundo actual. Nuestro dataset se basa en el que se puede econtrar [aquí](https://www.kaggle.com/n0n5ense/global-maritime-pirate-attacks-19932020). 
+> - La referencia completa es [@dataset].
+
+
+
+## Contexto de la piratería marina  {.flexbox .vcenter}
+
+![*La imagen que suele venirnos a la mente cuando pensamos en piratería.*](imagenes/piratas.jpg){width="800" height="height" position="center"}
+
+## Contexto de la piratería marina  {.flexbox .vcenter}
+
+- La pitarería marina es un problema actual con serias implicaciones sociales y económicas
+
+
+## Contexto de la piratería marina  {.flexbox .vcenter}
+
+> - No existe una única definición clara de qué constituye un ataque pirata [@Dillon_2005].
+> - Este dataset resulta de utilidad justamente por permitir diferenciar entre distintas variedades de ataque. 
+
+## Contexto de la piratería marina  {.flexbox .vcenter}
+
+> - Lo que une todos ellos viene recogido por la definición que proporciona el diccionario de Oxford del término *piracy* [@oxford]:
+
+> - The action of committing robbery, kidnap, or violence at sea or from the sea without lawful authority, especially by one vessel against another; an instance of this.
+
+
+## Contexto de la piratería marina  {.flexbox .vcenter}
+
+> - La pitratería en el mundo actual es una lacra para el desarrollo, con un coste económico estimado entre los 7 y 12 mil millones de dólares americanos al año, o incluso más [@Bowden_2010].
+> - Consecuencias humanitarias, que se dejan sentir especialmente en aquellos paíse subsdesarrollados en cuyas aguas se emplazan la mayoría de ataques.
+> - Los actos de piratería suelen suceder en un contexto mayor de violencia y desorden que casi siempre va de la mano de altos niveles de corrupción y llega a incluir guerras civiles [@Nincic_2009].
+> - Condiciona la vida de la población local a causa de las distorsiones que genera en los sectores pesquero y de explotación minera y petrolífera, a menudo principales fuentes de riqueza de las comunidades costeras de estos países [@Fu_2010].
+
+
+## Este trabajo {.flexbox .vcenter}
+
+> - Nuestro análisis va a permitir identificar algunas de las tendencias que han definido la evolución de la piratería en estos últimos años, especialmente en lo referente a prevalencia de los tipos de ataques y movimiento de las "zonas calientes" de la piratería internacional. También vamos a contextualizar esta información con datos de carácter económico, social y político.
+
+# Los datos
+
+## Haciendo los datos tidy {.flexbox .vcenter}
+
+> - Hemos unido dos de los datasets que teníamos y hemos tratado de limpiar los datos. Las principales labores han consistido en corregir inconsistencias en los nombres de tipos de ataques, barcos... además de cuestiones algo más técnicas de manipulación de la expresión de fecha y tipo de variable cuando lo hemos requerido.
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+library(readr)
+
+country_codes <- read_csv("datos/country_codes.csv")
+
+country_indicators <- read_csv("datos/country_indicators.csv")
+
+pirate_attacks <- read_csv("datos/pirate_attacks.csv")
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+
+country_data <- full_join(country_codes, country_indicators, by = c("country" = "country"))
+ 
+
+pirate_attacks <- pirate_attacks %>% mutate(year = year(date))
+
+
+pirate_attacks <- pirate_attacks %>% mutate(attack_type = case_when(
+  attack_type == "Boarding" ~ "Boarded", 
+  TRUE ~ attack_type))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_status = case_when(
+  vessel_status == "steaming" ~ "Steaming", 
+  TRUE ~ vessel_status))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_type = case_when(
+  vessel_type == "BULK CARRIER" ~ "Bulk Carrier", 
+  TRUE ~ vessel_type))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_type = case_when(
+  vessel_type == "CONTAINER" ~ "Container", 
+  TRUE ~ vessel_type))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_type = case_when(
+  vessel_type == "PRODUCT TANKER" ~ "Product Tanker", 
+  TRUE ~ vessel_type))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_type = case_when(
+  vessel_type == "Offshore Supply ship" ~ "Offshore Supply Ship", 
+  TRUE ~ vessel_type))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_type = case_when(
+  vessel_type == "OFFSHORE SUPPLY SHIP" ~ "Offshore Supply Ship", 
+  TRUE ~ vessel_type))
+
+pirate_attacks <- pirate_attacks %>% mutate(vessel_type = case_when(
+  vessel_type == "Offshore Supply" ~ "Offshore Supply Ship", 
+  TRUE ~ vessel_type))
+
+rm(country_codes, country_indicators)
+
+full_by_nearest <- full_join(pirate_attacks, country_data, by = c("nearest_country" = "country", "year" = "year"))|> filter(!is.na(longitude)) 
+
+
+
+
+
+
+
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+# numero de ataques
+
+n_attacks <- pirate_attacks |>  nrow() |> as.integer()
+
+
+# periodo de años: desde first_year hasta last_year
+
+first_year <- pirate_attacks |> select(year) |> slice_head(n = 1) |> as.integer()
+
+last_year <- pirate_attacks |> select(year) |>  slice_tail(n = 1) |> as.integer()
+```
+
+
+> - Lo que tenemos: `r n_attacks` ataques pirata ocurridos entre `r first_year` y `r last_year`.
+
+
+## {.smaller .flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+library(DT)
+
+datatable(pirate_attacks, rownames = FALSE, filter="top", options = list(pageLength = 8, scrollX=T))
+
+```
+
+
+## Ejemplo de visualización {.flexbox .vcenter}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+library("covid19.analytics")
+library("plotly")
+
+df2 <- full_by_nearest |> separate(date, c("year", "month", "day"), "-" ) |> dplyr::select("year","longitude","latitude","country_name") |> mutate(year = as.numeric(year)) |> rename(Province = year) |> rename(Country = country_name)|> rename(Long = longitude)|> rename(Lat = latitude) |> dplyr::select(4,1,2,3) |> as.data.frame()
+
+globemap <- live.map(data = df2, select.projctn = FALSE, title = "", no.legend = TRUE)
+
+globemap <- globemap %>% layout(title = "") 
+
+globemap
+```
+# Evolución de los ataques piratas
+
+## Evolución temporal {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(png)
+library(dplyr)
+library(grid)
+
+
+
+#Ataques totales a lo largo de los años
+
+at_totales <- pirate_attacks %>% group_by(year) %>% summarise(total= n()) 
+
+
+
+#representamos 
+
+
+p1 <- ggplot(data = at_totales, aes(year, total)) + geom_line(color="darkblue") + geom_point(color="darkblue") + theme_minimal() + geom_text(aes(y = total, ymax = total, label = total), position = position_dodge(width = 0.9), size=3, vjust=-0.8, hjust=0.8 ,col="black") + theme_classic() + labs(title = "Total de ataques",
+    subtitle = "(1993-2020)",
+    x = "Años",
+    y = "Nº de ataques") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5),plot.subtitle = element_text(size = 20, hjust = 0.5))
+
+#Añadimos una imagen
+img <- readPNG("imagenes/barco.png", FALSE)
+marca <- rasterGrob(img, interpolate=F,height=unit(3, "cm"),hjust=-1.30, vjust=-0.5)
+p1 <- p1 + annotation_custom(marca,xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf)
+
+p1
+
+year_at_max <- at_totales |> select(year) %>%  slice_max(order_by= year, n = 1) |> as.integer()
+
+at_max <- at_totales |> select(total) %>% slice_max(order_by= total, n = 1) |> as.integer()
+
+```
+
+
+## Concentración geográfica de los ataques {.flexbox .vcenter}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# mapa
+library(mapdata)
+library(ggplot2)
+library(maps)
+library(ggrepel)
+library(gganimate)
+
+library(plotly)
+
+# Guardamos la información en un nuevo dataframe llamado mapa_mundo
+
+at_mapa <- pirate_attacks %>% select(longitude, latitude, attack_type, year) |> mutate(year = as.integer(year))
+
+mapa_mundo <- map_data("world")
+
+p <- mapa_mundo %>%
+  ggplot() +
+  geom_polygon(aes( x= long, y = lat, group = group),
+               fill = "white",
+               color = "black") +
+  theme_minimal() +
+  theme(
+    axis.line = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.background = element_rect(colour= "black", size= 1)) +
+  geom_point(data=at_mapa, aes(longitude, latitude),
+             color= "darkgoldenrod1", size=2) +
+  ggtitle( "Ataques piratas entre 1993 y 2020") +
+  coord_fixed (xlim= c(-200,200),
+              ylim= c(-58,90),
+              ratio = 1.3) + transition_time(year) + labs(caption = "Year: {frame_time}") + theme(panel.background = element_rect(fill = "lightblue2")) 
+
+
+animate(p, width = 700, height = 432, fps = 1, duration = 15, rewind = FALSE)
+```
+
+
+## Concentración geográfica de los ataques {.flexbox .vcenter}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+full_by_nearest <- full_join(pirate_attacks, country_data, by = c("nearest_country" = "country", "year" = "year"))|> filter(!is.na(longitude))
+
+df <- full_by_nearest |> drop_na(region) |> dplyr::select(year, region) |> unite("id", c(1:2), sep = "_", remove = TRUE)|>  group_by(id) |> mutate(nattacks = n()) |> ungroup() |> distinct() |> separate(id, c("year", "region"), "_" ) |> mutate(year = as.numeric(year))
+
+
+accumulate_by <- function(dat, var) {
+  var <- lazyeval::f_eval(var, dat)
+  lvls <- plotly:::getLevels(var)
+  dats <- lapply(seq_along(lvls), function(x) {
+    cbind(dat[var %in% lvls[seq(1, x)], ], frame = lvls[[x]])
+  })
+  dplyr::bind_rows(dats)
+}
+
+
+fig <- df 
+fig <- fig %>% accumulate_by(~year)
+
+
+fig <- fig %>%
+  plot_ly(
+    x = ~year, 
+    y = ~nattacks,
+    split = ~region,
+    frame = ~frame, 
+    type = 'scatter',
+    mode = 'lines', 
+    fill = 'tozeroy',
+    line = list(simplyfy = F)
+  )
+fig <- fig %>% layout(
+  xaxis = list(
+    title = "Año",
+    zeroline = F
+  ),
+  yaxis = list(
+    title = "Número de ataques",
+    zeroline = F
+  )
+)
+fig <- fig %>% animation_opts(
+  frame = 100, 
+  transition = 0, 
+  redraw = FALSE
+)
+fig <- fig %>% animation_slider(
+  currentvalue = list(
+    prefix = "Año "
+  )
+)
+
+fig
+
+```
+
+## Tipos de ataques más frecuentes {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#Ataques según tipo: cantidad total de los ataques según el tipo entre 1993 y 2020 (en el grafico poner los numeros en las barras)
+
+library(ggthemes)
+
+
+a <- pirate_attacks %>% select(year, attack_type) %>% group_by(year) %>%  count(attack_type) %>% filter(year < 2000) %>% group_by(attack_type) %>% summarise(n = sum(n)) %>% drop_na()
+period <- c("1993-1999","1993-1999","1993-1999","1993-1999")
+a <- data.frame(period, a)  
+
+b <- pirate_attacks %>% select(year, attack_type) %>% group_by(year) %>%  count(attack_type) %>% filter(year > 1999 & year < 2007, !attack_type == "Detained") %>% group_by(attack_type) %>% summarise(n = sum(n)) %>% drop_na()
+period <- c("2000-2006","2000-2006","2000-2006",
+            "2000-2006")
+b <- data.frame(period, b)
+
+c <- pirate_attacks %>% select(year, attack_type) %>% group_by(year) %>%  count(attack_type) %>% filter(year > 2006 & year < 2014) %>% group_by(attack_type) %>% summarise(n = sum(n)) %>% drop_na()
+period <- c("2007-2013","2007-2013","2007-2013","2007-2013")
+c <- data.frame(period, c)
+
+d <- pirate_attacks %>% select(year, attack_type) %>% group_by(year) %>%  count(attack_type) %>% filter(year > 2013) %>% group_by(attack_type) %>% summarise(n = sum(n)) %>% drop_na()
+period <- c("2014-2020","2014-2020","2014-2020","2014-2020",
+            "2014-2020")
+d <- data.frame(period, d)
+
+at <- rbind(a,b,c,d) %>%  mutate(attack_type = forcats::as_factor(attack_type)) %>% mutate(attack_type = forcats::fct_reorder(attack_type, n, .desc = TRUE))
+
+  
+
+
+ggplot(data=at, aes(attack_type, n)) + 
+  geom_bar(stat="identity", fill="MediumSlateBlue") + 
+  theme_classic() + 
+  geom_text(aes(y = n, label = n), 
+            position = position_dodge(width = 0.9), size=3,
+            vjust=-0.1, hjust=0.5 ,col="black", fontface = "bold") +
+  labs(title = "Tipos de ataques",
+    subtitle = "(1993-2020)",
+    x = "Tipos de ataques",
+    y = "Número de ataques") + 
+  theme(plot.title = element_text(size = 20, face = "bold", 
+                                  hjust = 0.5), 
+        plot.subtitle = element_text(size = 20, hjust = 0.5)) +
+  facet_wrap(vars(period)) +
+  scale_x_discrete(labels=c("Abordaje","Intento","Secuestro",
+                            "Duda", "Explosión", "Disparos")) +
+  scale_y_continuous(limits = c(0, 1700))
+
+```
+
+## Su concentración geográfica {.flexbox .vcenter}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tmap) 
+library(ggplot2)
+library(maps)
+library(ggthemes)
+
+data(World)
+world <- World |> filter(continent != "Antarctica") ; rm(World)
+
+df <- pirate_attacks |> filter(attack_type == "Boarded" | attack_type == "Hijacked" | attack_type == "Attempted" )
+
+map_by_type <- ggplot() + 
+  geom_sf(data = world, color = "grey", fill = "grey", lwd = 0.2, aes(geometry = geometry)) + 
+  geom_point(data = df, aes(x = longitude, y = latitude, color = attack_type), size = 0.5, alpha = 0.3) + 
+  scale_color_discrete(labels = c("Intento", "Abordaje", "Secuestro")) +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.ticks = element_line(linetype = "blank"),
+    panel.grid.major = element_line(linetype = "blank"),
+    panel.grid.minor = element_line(linetype = "blank"),
+    legend.title = element_text(face = "bold"),
+    panel.background = element_rect(fill = NA),
+    legend.key = element_rect(fill = NA),
+    legend.background = element_rect(fill = NA),
+    legend.position = "bottom", legend.direction = "horizontal") +labs(title = "Ataques de los tipos más frecuentes", x = NULL,
+    y = NULL, colour = "Tipo de ataque")+ theme(axis.text = element_text(face = "bold",
+    colour = NA, hjust = 0, vjust = 0), legend.background = element_rect(fill = "white"),
+    legend.position = c(0.1, 0.3), legend.direction = "vertical") 
+
+map_by_type 
+```
+
+
+## Distancia media a la costa de cada tipo de ataque {.flexbox .vcenter}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df <- pirate_attacks |> filter(attack_type == "Boarded" | attack_type == "Hijacked" | attack_type == "Attempted" ) |>  group_by(attack_type) |> summarise(n = mean(shore_distance)) |> mutate(attack_type = forcats::as_factor(attack_type)) |> mutate(attack_type = forcats::fct_reorder(attack_type, n, .desc = TRUE))
+
+ggplot(data = df) + geom_bar(mapping = aes(x = attack_type, y = n), stat = "identity", fill=c("PowderBlue", "MistyRose", "LightSteelBlue")) + theme(panel.grid.major = element_line(linetype = "blank"),
+    panel.grid.minor = element_line(linetype = "blank"),
+    panel.background = element_rect(fill = NA))  +
+  labs(title = "Distancia media a la costa por tipo de ataque",
+    x = "Tipos de ataques",
+    y = "Distancia media a la costa") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5),         plot.subtitle = element_text(size = 20, hjust = 0.5)) + scale_x_discrete(labels=c("Intento","Secuestro","Abordaje"))
+```
+
+## {.flexbox .vcenter}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(plotly)
+
+df <- full_by_nearest |> filter(attack_type == "Boarded" | attack_type == "Hijacked" | attack_type == "Attempted" )
+
+
+fig3d <- plot_ly(df, x = ~longitude, y = ~latitude, z = ~shore_distance, color = ~attack_type, size = 0.2, alpha = 1)
+fig3d <- fig3d %>% add_markers()
+
+fig3d <- fig3d %>% layout(scene = list(xaxis = list(title = 'Longitud'),
+                                  yaxis = list(title = 'Latitud'),
+                                  zaxis = list(title = 'Distancia a la costa')))
+
+fig3d
+```
+
+
+
+
+## Estado de las embarcaciones {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+at_estado <- pirate_attacks %>% select(year, vessel_status) %>% group_by(year) %>%  count(vessel_status) %>%  filter(!is.na(vessel_status)) %>% slice_max(order_by = n, n=7) %>% group_by(vessel_status) %>% summarise(h=sum(n)) %>% slice_max(order_by = h, n=11) %>%
+  mutate(vessel_status = case_when(
+    vessel_status == "Anchored" ~ "Anclado",
+    vessel_status == "Steaming" ~ "Navegando",
+    vessel_status == "Berthed" ~ "Atracado",
+    vessel_status == "Underway" ~ "En marcha",
+    vessel_status == "Stationary" ~ "Estacionado",
+    vessel_status == "Drifting" ~ "A la deriva",
+    vessel_status == "Moored" ~ "Amarrado",
+    vessel_status == "Bunkering operations" ~ "Repostando",
+    vessel_status == "Fishing" ~ "Pescando",
+    vessel_status == "Grounded" ~ "En tierra",
+    vessel_status == "Towed" ~ "Remolcado",
+  )) %>% 
+  mutate(vessel_status = forcats::as_factor(vessel_status)) %>% mutate(vessel_status = forcats::fct_reorder(vessel_status, h, .desc = FALSE))
+
+
+ggplot(data=at_estado, aes(vessel_status, h)) + geom_col(fill="Thistle") + 
+  coord_flip() + 
+  theme_minimal() + 
+  labs(title = "Estado de las embarcaciones",
+    x = "Estado de la embarcación",
+    y = "Número de embarcaciones") + 
+  theme(plot.title = element_text(size = 20, face = "bold", hjust = 0),         plot.subtitle = element_text(size = 20, hjust = 0.5),
+        axis.title.x = element_text(size = 13, hjust = 1, vjust = 0),
+        axis.title.y = element_text(size = 13, hjust = 1, vjust = 1))
+
+```
+
+
+
+
+## Tipo de barco {.flexbox .vcenter}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+df <- pirate_attacks |> filter(vessel_type %in% c(  
+  "Bulk Carrier",
+  "Product Tanker",
+  "Container",
+  "General Cargo",
+  "Chemical Tanker")) 
+
+
+data(World)
+world <- World |> filter(continent != "Antarctica") ; rm(World)
+
+map_by_type2 <- ggplot() + 
+  geom_sf(data = world, color = "grey", fill = "grey", lwd = 0.2, aes(geometry = geometry)) + 
+  geom_point(data = df, aes(x = longitude, y = latitude, color = vessel_type), size = 0.5, alpha = 0.3) + theme(axis.ticks = element_line(linetype = "blank"),
+    panel.grid.major = element_line(linetype = "blank"),
+    panel.grid.minor = element_line(linetype = "blank"),
+    legend.title = element_text(face = "bold"),
+    panel.background = element_rect(fill = NA),
+    legend.key = element_rect(fill = NA),
+    legend.background = element_rect(fill = NA),
+    legend.position = "bottom", legend.direction = "horizontal") +
+  labs(title = "Ataques de los tipos de barco más frecuentes", 
+       x = NULL,
+       y = NULL, 
+       colour = "Tipo de barco")+
+  scale_color_discrete(labels = c("Granelero", "Buque cisterna\nquímico", "Contenedor", "Carguero", "Buque de\nproductos")) +
+  theme(plot.title = element_text(hjust = 0.5),
+    axis.text = element_text(face = "bold",
+    colour = NA, hjust = 0, vjust = 0), 
+    legend.background = element_rect(fill = "transparent"),
+    legend.position = c(0.1, 0.3), 
+    legend.direction = "vertical",
+    legend.title = element_text(hjust = 0.5)) 
+
+map_by_type2 
+```
+
+## Nombres de los barcos más atacados {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+nom_barc <- pirate_attacks %>% select(year, vessel_name) %>% group_by(year)  %>% count(vessel_name) %>% filter(!is.na(vessel_name)) %>% filter(!vessel_name %in% c("Unspecified","Name Withheld")) %>% group_by(vessel_name) %>% summarise(h=sum(n)) %>% slice_max(order_by = h, n=5) %>%  mutate(vessel_name = forcats::as_factor(vessel_name)) %>% mutate(vessel_name = forcats::fct_reorder(vessel_name, h, .desc = TRUE))
+
+
+
+library(plotly)
+
+
+p1 <- ggplot(data=nom_barc, aes(vessel_name, h )) + geom_col(fill="PaleVioletRed") + theme_minimal() + 
+  labs(title = "Nombres de las embarcaciones más atacadas",
+       x = "Nombre del barco",
+       y = "Número de ataques") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0),         plot.subtitle = element_text(size = 20, hjust = 0.5),
+        axis.title.x = element_text(size = 13, hjust = 1, vjust = 0),
+        axis.title.y = element_text(size = 13, hjust = 1, vjust = 1))
+
+s <- ggplotly(p1)
+
+htmltools::div(s, align = "center" )
+```
+
+
+# Análisis de los países
+
+## Regiones {.flexbox .vcenter}
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+options(scipen = 999)
+
+# Datos
+
+codigos <- rio::import(here::here("datos", "country_codes.csv"))
+
+indicadores <- rio::import(here::here("datos", "country_indicators.csv"))
+
+paises <- full_join(codigos, indicadores, by= c("country" = "country"))
+
+media_paises <- paises %>% group_by(country, country_name) %>% summarise(media_corrupción = mean(corruption_index, na.rm = TRUE), media_homicidios = mean(homicide_rate, na.rm = TRUE), media_militar = mean(total_military, na.rm = TRUE), media_gasto = mean(totalgr, na.rm= TRUE))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+media_regiones <- paises %>% 
+  select(region, country_name, total_military) %>% 
+  group_by(region, country_name) %>% 
+  summarise(media_militar = mean(total_military, na.rm = TRUE)) %>% 
+  ungroup() %>% group_by(region) %>%  
+  mutate(media_militar = mean(media_militar, na.rm = TRUE)) %>% 
+  mutate(iso2 = countrycode::countrycode(
+    sourcevar = country_name, origin = "country.name",
+    destination =  "iso2c", warn = FALSE), .after = country_name) 
+
+mapa_mundo <- map_data("world") %>% 
+  mutate(iso2 = countrycode::countrycode(
+    sourcevar = region, origin = "country.name",
+    destination =  "iso2c", warn = FALSE), .after = region) 
+
+paises_mapa <- full_join(mapa_mundo, media_regiones, 
+                         by= c("iso2"="iso2"))
+
+t <- paises_mapa %>%
+  ggplot() +
+  geom_polygon(aes(x= long, y = lat, group = group, fill = region.y),
+               color = "black") +
+  labs(
+    title = "Representación de los\npaíses de cada región",
+    fill = "Regiones"
+  ) +
+  scale_fill_discrete(breaks = c("East Asia & Pacific", 
+                                 "Europe & Central Asia", 
+                                 "Latin America & Caribbean", 
+                                 "Middle East & North Africa", 
+                                 "North America", "South Asia", 
+                                 "Sub-Saharan Africa"), 
+                      labels = c("Asia del Este\n& Pacífico", 
+                                 "Europa\n& Asia Central", 
+                                 "Latino América\n& Caribe", 
+                                 "Oriente Medio\n& Norte de Africa", 
+                                 "América\ndel Norte", 
+                                 "Sur\nde Asia", 
+                                 "África\nSub-Sahariana")) +
+  theme_minimal() +
+  theme(plot.title = element_text(
+    size = 15, face = "bold", hjust = 0.5),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_rect(colour= "black", 
+                                        size= 1, 
+                                        fill = "lightblue2"),
+        legend.title = element_text(face= "bold"),
+        legend.position = "bottom",
+        legend.direction = "horizontal") +
+  coord_fixed (xlim= c(-200,200),
+               ylim= c(-58,90),
+               ratio = 1.3) 
+
+t
+```
+
+## Evolución del índice de corrupción {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+media_regiones <- paises %>% 
+  group_by(region, year) %>% 
+  summarise(media_corrupción = mean(corruption_index, na.rm = TRUE),
+            media_homicidios = mean(homicide_rate, na.rm = TRUE),
+            media_militar = mean(total_military, na.rm = TRUE),
+            media_gasto = mean(totalgr, na.rm= TRUE)) %>% 
+  ungroup() %>% mutate(year = as.numeric(year)) %>%
+  mutate(media_corrupción = ifelse(
+    year<2012, media_corrupción *10, media_corrupción)) %>%
+  filter(year >= 1995) %>% 
+  mutate(media_regiones= is.numeric(media_regiones))
+
+zz <- media_regiones %>%
+  ggplot(aes(x = region, 
+             y = media_corrupción, 
+             fill= region )) +
+  geom_bar(stat= "identity", 
+           color = "white", 
+           show.legend = FALSE) +
+  geom_text(aes(label = round(media_corrupción, digits = 2)), 
+            position = position_dodge(0.9), 
+            vjust= 1.2, 
+            size = 5, 
+            color = "white")+
+  scale_x_discrete(labels = c("Asia del Este\n& Pacífico", 
+                              "Europa\n& Asia Central", 
+                              "Latino América\n& Caribe", 
+                              "Oriente Medio\n& Norte de Africa",
+                              "América\ndel Norte", 
+                              "Sur\nde Asia",
+                              "África\nSub-Sahariana")) + 
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal()+
+  enter_appear() +
+  transition_states(year, 
+                    transition_length = 1.5, 
+                    state_length = 2) +
+  labs(title = " Evolución del índice de corrupción por regiones  \n Year : {closest_state}", 
+       subtitle = "Evolución por regiones",
+       y = "",
+       x = "") +
+  theme(panel.grid.major.x = element_blank(),
+        plot.title = element_text(size = 18, 
+                                  face = "bold", 
+                                  hjust = 0.5),
+        plot.subtitle = element_text(size=14, 
+                                     face = "plain", 
+                                     hjust = 0.5)) 
+
+
+animate(zz, width = 500, height = 500, fps = 2, 
+        duration = 30, rewind = FALSE) 
+```
+
+## Evolución de la tasa de homicidios {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+media_regiones <- paises %>% group_by(region, year) %>%
+  summarise(media_corrupción = mean(corruption_index, na.rm = TRUE),
+            media_homicidios = mean(homicide_rate, na.rm = TRUE),
+            media_militar = mean(total_military, na.rm = TRUE),
+            media_gasto = mean(totalgr, na.rm= TRUE)) %>%
+  ungroup() %>% mutate(year = as.numeric(year))
+
+bb <- media_regiones %>%
+  filter(!year %in% c(2019, NA)) %>%
+  ggplot(aes(x= year, y= media_homicidios)) + 
+  labs(title = "Evolución tasa de homicidios\npor regiones",
+       x= "Año",
+       y= "Índice de homicidios medio",
+       color = "Regiones") +
+  geom_point(aes(color= region), size= 3) +
+  geom_line(aes(color= region), size= 1.5) + 
+  scale_color_manual(values= c("red", "blue", "green", "black",
+                               "yellow", "orange", "midnightblue"),
+                     labels = c("Asia del Este\n&\nPacífico",
+                                "Europa\n&\nAsia Central",
+                                "Latino América\n&\nCaribe",
+                                "Oriente Medio\n&\nNorte de Africa",
+                                "América\ndel\nNorte",
+                                "Sur\nde\nAsia",
+                                "África\nSub-Sahariana"))+
+  theme_minimal() +
+  theme(plot.title = element_text(size = 20, face = "bold",
+                                  hjust = 0.5),
+        axis.title.x = element_text(size = 13, hjust = 1,
+                                    vjust = 0),
+        axis.title.y = element_text(size = 13, hjust = 1, vjust = 1),
+        legend.title = element_text(face = "bold")) +
+  transition_reveal(year) + 
+  view_follow()
+
+bb #gganimate  
+```
+
+## Media de ingresos públicos {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(hrbrthemes)
+
+media_regiones <- paises %>% group_by(region, year) %>%
+  summarise(media_corrupción = mean(corruption_index, na.rm = TRUE),
+            media_homicidios = mean(homicide_rate, na.rm = TRUE),
+            media_militar = mean(total_military, na.rm = TRUE),
+            media_gasto = mean(totalgr, na.rm= TRUE)) %>%
+  ungroup() %>% mutate(year = as.numeric(year))
+
+media_regiones %>% 
+  select(region, year, media_gasto) %>%
+  filter(!year == is.na(year)) %>% 
+  mutate(year = as.character(year)) %>% 
+  ggplot(aes(x= region, y= media_gasto)) +
+  geom_boxplot() + 
+  geom_jitter(aes(color= year), size= 2) +
+  scale_x_discrete(labels = c("Asia del Este\n&\nPacífico",
+                              "Europa\n&\nAsia Central",
+                              "Latino América\n&\nCaribe",
+                              "Oriente Medio\n&\nNorte de Africa",
+                              "América\ndel\nNorte", 
+                              "Sur\nde\nAsia",
+                              "África\nSub-Sahariana")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(title = "Porcentaje ingresos públicos por región",
+       subtitle = "De 1993 a 2019",
+       x= "Región",
+       y= "Ingresos públicos (%PIB)",
+       color = "Año") +
+  theme_ipsum() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.title.x = element_text(size = 12, face = "bold"),
+        axis.title.y = element_text(size = 12, face = "bold"),
+        legend.title = element_text(face = "bold", hjust = 0.5))
+```
+
+## Número medio de militares {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+media_regiones <- paises %>% 
+  select(region, country_name, total_military) %>% 
+  group_by(region, country_name) %>% 
+  summarise(media_militar = mean(total_military, na.rm = TRUE)) %>%
+  ungroup() %>% group_by(region) %>%  
+  mutate(media_militar = mean(media_militar, na.rm = TRUE)) %>%
+  mutate(iso2 = countrycode::countrycode(
+    sourcevar = country_name, origin = "country.name",
+    destination =  "iso2c", warn = FALSE), .after = country_name) 
+
+mapa_mundo <- map_data("world") %>%
+  mutate(iso2 = countrycode::countrycode(
+    sourcevar = region, origin = "country.name",
+    destination =  "iso2c", warn = FALSE), .after = region) 
+
+paises_mapa <- full_join(mapa_mundo, media_regiones, 
+                         by= c("iso2"="iso2"))
+
+a <- paises_mapa %>%
+  ggplot() +
+  geom_polygon(aes( x= long, y = lat, group = group,
+                    fill = region.y), color = "black") +
+  labs(title = "Número total de militares por región",
+    fill = "Regiones") +
+  scale_fill_discrete(breaks = c("East Asia & Pacific", 
+                                 "Europe & Central Asia", 
+                                 "Latin America & Caribbean",
+                                 "Middle East & North Africa", 
+                                 "North America", "South Asia",
+                                 "Sub-Saharan Africa"), 
+                      labels = c("Asia del Este\n& Pacífico",
+                                 "Europa\n& Asia Central", 
+                                 "Latino América\n& Caribe", 
+                                 "Oriente Medio\n& Norte de Africa",
+                                 "América\ndel Norte", 
+                                 "Sur\nde Asia",
+                                 "África\nSub-Sahariana")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 15, face = "bold", 
+                                  hjust = 0.5),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_rect(colour= "black", size= 1, 
+                                        fill = "lightblue2"),
+        legend.title = element_text(face= "bold"),
+        legend.position = "bottom",
+        legend.direction = "horizontal") +
+  annotate("text", x= 95, y= 62, label = "123.550", size= 6,
+           fontface=2, color= "brown") +
+  annotate("text", x= 180, y= 10, label = "421.262", size= 6,
+           fontface=2, color= "red") +
+  annotate("text", x= -110, y= -10, label = "80.469", size= 6,
+           fontface=2, color = "seagreen") +
+  annotate("text", x= 72, y= -5, label = "516.730", size= 5,
+           fontface=2, color = "purple") +
+  annotate("text", x= -45, y= 30, label = "178.468", size= 5,
+           fontface=2, color = "turquoise4") +
+  annotate("text", x= -170, y= 40, label = "792.325", size= 6,
+           fontface=2, color = "blue") +
+  annotate("text", x= 20, y= -40, label = "38.301", size= 6,
+           fontface=2, color = "magenta") +
+  coord_fixed (xlim= c(-200,200),
+               ylim= c(-58,90),
+               ratio = 1.3) 
+
+a
+```
+
+## Número de militares por país {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#cuartiles <- descr(ejercito$mili_pc)
+
+ejercito <- paises %>% 
+  select(country_name, year, total_military, population) %>%
+  drop_na(total_military, population) %>% 
+  mutate(mili_pc = total_military/population) %>%
+  group_by(country_name) %>% mutate(mili_pc = mean(mili_pc)) %>%
+  mutate(mili_pc = case_when(
+    mili_pc <= 0.0025272261 ~ 1,
+    mili_pc > 0.0025272261 & mili_pc < 0.0049017440 ~ 2, 
+    mili_pc > 0.0049017440 & mili_pc < 0.0084707455 ~ 3,
+    mili_pc >= 0.0084707455  ~ 4,
+    is.na(mili_pc) ~ 0)) %>% 
+  mutate(country_name = ifelse(
+    country_name == "SÃ£o TomÃ© and Principe",
+    "São Tomé and Principe", country_name)) %>% 
+  mutate(iso2 = countrycode::countrycode(
+    sourcevar = country_name, origin = "country.name",
+    destination =  "iso2c", warn = FALSE), .after = country_name) %>%
+  mutate(mili_pc = as.character(mili_pc))
+
+mapa_mundo <- map_data("world") %>% 
+  mutate(iso2 = countrycode::countrycode(
+    sourcevar = region, origin = "country.name",
+    destination =  "iso2c", warn = FALSE), .after = region) 
+
+paises_mapa2 <- full_join(mapa_mundo, ejercito, by= c("iso2"="iso2"))
+
+l <- paises_mapa2 %>%
+  ggplot() +
+  geom_polygon(aes( x= long, y = lat, group = group, fill = mili_pc),
+               color = "black") +
+  scale_fill_discrete(breaks = c(4, 3, 2, 1, 0), 
+                      labels= c("n > 0.84%", 
+                                "0.49% < n < 0.84%",
+                                "0.25% < n < 0.49%", "n < 0.25%",
+                                "Sin datos")) +
+  labs(
+    title = "Porcentaje de militares por país",
+    subtitle = "Media del periodo 1993-2019",
+    fill = "Porcentaje de militares"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 15, face = "bold",
+                                  hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        legend.title = element_text(face = "bold"),
+        legend.position = "bottom",
+        legend.direction = "vertical",
+        panel.background = element_rect(colour= "black", size= 1,
+                                        fill ="lightblue2")) +
+  coord_fixed (xlim= c(-200,200),
+               ylim= c(-58,90),
+               ratio = 1.3) 
+
+l
+```
+
+## Los países con más militares {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ejercito2 <- paises %>% 
+  select(country_name, year, total_military, population) %>% 
+  drop_na(total_military, population) %>% 
+  mutate(mili_pc = total_military/population) %>% 
+  group_by(country_name) %>% summarise(mili_pc = mean(mili_pc)) %>% 
+  slice_max(order_by = mili_pc, n= 5) %>% 
+  mutate(country_name = forcats::as_factor(country_name)) %>% 
+  mutate(country_name = forcats::fct_reorder(
+    country_name, mili_pc, .desc = FALSE))
+
+a <- ggplot(ejercito2) + 
+  geom_col(aes(x=country_name, y= mili_pc), fill = "sienna") +
+  scale_y_continuous(limits = c(0, 0.06), 
+                     breaks = seq(0, 0.06, 0.02), 
+                     labels = scales::percent_format(accuracy = 1)) +
+  scale_x_discrete(labels = c("Brunei", "Israel",
+                              "Singapur", "Corea del Norte",
+                              "Eritrea")) +
+  labs(title = "Top 5 países con mayor\nporcentaje de militares",
+       x= "",
+       y="") +
+  coord_flip() +
+  theme_ipsum() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+dd <- ggplotly(a, width = 600, height = 520)
+
+htmltools::div(dd, align = "center")
+```
+
+
+
+## Tasa de desempleo {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(gt)
+
+desemp_max <- paises %>% group_by(country_name) %>% 
+  mutate(unemployment_rate = unemployment_rate/100) %>% 
+  summarise(desemp = mean(unemployment_rate)) %>% drop_na() %>% 
+  slice_max(order_by = desemp, n= 5)
+
+desemp_max %>% #gtTable
+  mutate(country_name = case_when(
+    country_name == "North Macedonia" ~ "Macedonia del Norte",
+    country_name == "Lesotho" ~ "Lesoto",
+    country_name == "South Africa" ~ "Sudáfrica",
+    country_name == "Bosnia and Herzegovina" ~ 
+      "Bosnia & Herzegovina",
+    country_name == "Eswatini" ~ "Suazilandia")) %>% 
+  gt(rowname_col = "country_name") %>% 
+  tab_header(title = md("**Top 5 mayor tasa de desempleo**"),
+             subtitle = md("De 1993 a 2019")) %>% 
+  tab_options(heading.background.color = "tan2") %>% 
+  tab_options(heading.title.font.size = 25, 
+              heading.subtitle.font.size = 20,  
+              column_labels.font.weight =  "bold", 
+              heading.align = "center") %>% 
+  tab_options(table.align = "center") %>% 
+  cols_align(align = "center") %>% 
+  cols_label(desemp = "Desempleo medio") %>% 
+  fmt_percent(columns= 2, 
+             decimals = 2,
+             dec_mark = ",")
+
+
+```
+
+## Tasa de desempleo {.flexbox .vcenter}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+desemp_min <- paises %>% group_by(country_name) %>% 
+  mutate(unemployment_rate = unemployment_rate/100) %>% 
+  summarise(desemp = mean(unemployment_rate)) %>% drop_na() %>% 
+  slice_min(order_by = desemp, n= 5) 
+
+desemp_min %>% #gtTable
+  mutate(country_name = ifelse(
+    country_name == "Cambodia", "Camboya", country_name)) %>%
+  gt(rowname_col = "country_name") %>% 
+  tab_header(title = md("**Top 5 menor tasa de desempleo**"),
+             subtitle = md("De 1993 a 2019")) %>% 
+  tab_options(heading.background.color = "tan2") %>% 
+  tab_options(heading.title.font.size = 25, 
+              heading.subtitle.font.size = 20,  
+              column_labels.font.weight =  "bold", 
+              heading.align = "center") %>% 
+  tab_options(table.align = "center") %>% 
+  cols_align(align = "center") %>% 
+  cols_label(desemp = "Desempleo medio") %>% 
+  fmt_percent(columns= 2, 
+              decimals = 2,
+              dec_mark = ",")
+
+
+```
+
+
+## Evolución del desempleo {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+b <- paises %>% 
+  select(country_name, year, unemployment_rate) %>%  
+  mutate(country_name = case_when(
+    country_name == "North Macedonia" ~ "Macedonia del Norte",
+    country_name == "Lesotho" ~ "Lesoto",
+    country_name == "South Africa" ~ "Sudáfrica",
+    country_name == "Bosnia and Herzegovina" ~ 
+      "Bosnia & Herzegovina",
+    country_name == "Eswatini" ~ "Suazilandia",
+    country_name == "Cambodia" ~ "Camboya",
+    TRUE ~ country_name)) %>% 
+  filter(country_name %in% c("Myanmar", "Camboya",
+                             "Rwanda", "Bahrain", "Qatar",
+                             "Macedonia del Norte", "Lesoto",
+                             "Sudáfrica", "Bosnia & Herzegovina",
+                             "Suazilandia")) %>% 
+  mutate(unemployment_rate = unemployment_rate/100) %>% 
+  ggplot(aes(x= year, y= unemployment_rate, color= country_name)) +
+  geom_line(size = 1.2) +
+  scale_y_continuous(limits = c(0, 0.4),
+                     labels = scales::percent_format(accuracy = 1)) +
+  scale_color_discrete(labels = c("Bahrain", "Bosnia\n& Herzegovina",
+                                  "Camboya", "Lesoto", 
+                                  "Macedonia\ndel Norte", "Myanmar",
+                                  "Qatar", "Rwanda", "Suazilandia",
+                                  "Sudáfrica")) +
+  scale_color_viridis_d() +
+  labs(title = "Evolución del TOP 5\nmayor y menor tasa de desempleo",
+       x = "Tasa de desempleo",
+       y = "Año",
+       color = "Países") +
+  theme_ipsum() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.title = element_text(face = "bold"))
+
+pp <- ggplotly(b, width = 600, height = 500)
+
+htmltools::div(pp, align = "center" )
+```
+
+## Kilogramos de pesca según la población {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(wordcloud2)
+
+pesca <- paises %>% 
+  mutate(fish = total_fisheries_per_ton*1000/population) %>% 
+  group_by(country_name) %>% 
+  summarise(fish_pc = mean(fish, na.rm = TRUE)) %>% 
+  mutate(fish_pc = round(fish_pc, digits = 2)) %>% 
+  mutate(country_name = case_when(
+    country_name == "Greenland" ~ "Groenlandia",
+    country_name == "Iceland" ~ "Islandia",
+    country_name == "Marshall Islands" ~ "Islas Marshall",
+    country_name == "Maldives" ~ "Maldivas",
+    country_name == "Faroe Islands" ~ "Islas Faroe",
+    country_name == "St. Vincent and the Grenadines" ~ 
+      "San Vicente y las Granadinas", 
+    country_name == "Norway" ~ "Noruega",
+    TRUE ~ country_name)) %>% 
+  slice_max(order_by = fish_pc, n=200)
+
+wordcloud2(pesca, shape= "diamond", size = 0.8)
+```
+
+## PIB per capita {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+gdp_pc <- paises %>% group_by(country_name) %>% 
+  mutate(ind_pc = industryofgdp*GDP) %>% 
+  select(country_name, year, region, GDP, ind_pc) %>%  
+  drop_na(ind_pc)  
+
+gdp_pc %>% ggplot(aes(x= GDP, y= ind_pc)) +
+  geom_point(color = "salmon2", size = 2) +
+  scale_color_discrete(labels = c("Asia del Este\n& Pacífico",
+                                  "Europa\n& Asia Central",
+                                  "Latino América\n& Caribe",
+                                  "Oriente Medio\n& Norte de Africa",
+                                  "América\ndel Norte",
+                                  "Sur\nde Asia",
+                                  "África\nSub-Sahariana")) + 
+  theme_minimal() +
+  transition_states(year) +
+  labs(title = "Evolución del PIB industrial per capita
+en función del PIB per capita\n Year : {closest_state}", 
+       y = "PIB industrial per capita",
+       x = "PIB per capita",
+       color = "Regiones") +
+  theme(plot.title = element_text(size = 20, hjust = 0.5,
+                                  face = "bold"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.title = element_text(face = "bold", hjust = 0.5))
+```
+
+# Conclusiones
+
+## Correlaciones {.flexbox .vcenter}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(corrplot)
+
+full_by_nearest <- full_join(pirate_attacks, country_data, by = c("nearest_country" = "country", "year" = "year"))|> filter(!is.na(longitude)) 
+
+full_by_nearest <- full_by_nearest |> select(1,7,11:21) |>  group_by(nearest_country, year) |> mutate(nattacks = n()) |> ungroup() |> distinct()%>% select(where(is.numeric))
+
+cor <- cor(full_by_nearest, use = "complete.obs")
+
+corrplot(cor, type="upper", order="hclust", insig = "blank")
+```
+
+## Cómo ampliar este análisis {.flexbox .vcenter}
+
+- Este trabajo ha sido éxitoso identificando en los datos ciertos patrones en los ataques pirata ya apreciados por la literatura.
+
+- No ha habido el mismo éxito buscando correlaciones con las variables de las que disponemos de los países.
+
+
+# Bibliografía
+
+## Bibliografía {.smaller .flexbox .vcenter}
+
+
+::: {#refs}
+:::
